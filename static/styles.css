@@ -198,6 +198,101 @@ button:hover {
   padding: 1.25rem;
 }
 
+.panel-card {
+  background: var(--panel-muted);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1.5rem;
+}
+
+.hero-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.hero-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0 0 0.25rem;
+}
+
+.hero-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.hero-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.inline-form {
+  margin: 0;
+}
+
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(280px, 1fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+.dashboard-side {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.text-muted {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.panel-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.feed-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.feed-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.feed-filter {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.feed-filter input {
+  width: 5rem;
+}
+
+.side-card h3 {
+  margin-top: 0;
+}
+
+.stacked-form button {
+  justify-self: end;
+}
+
 .feed-card h4 {
   margin: 0 0 0.25rem;
 }
@@ -342,6 +437,12 @@ button:hover {
   color: var(--text-muted);
 }
 
+.search-results-card .user-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
 .self-pill {
   font-weight: 600;
   color: var(--accent);
@@ -454,5 +555,9 @@ button:hover {
   .fab {
     right: 1rem;
     bottom: 1rem;
+  }
+
+  .dashboard-layout {
+    grid-template-columns: 1fr;
   }
 }
