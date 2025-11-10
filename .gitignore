@@ -1,3 +1,23 @@
+# Python bytecode / cache
+__pycache__/
+social_network/__pycache__/
+*.py[cod]
+*.pyc
+
+# Virtual environments & local tooling
 venv/
+.venv/
 .env
-.venv
+
+# Distribution / packaging artifacts
+build/
+dist/
+*.egg-info/
+
+# Tool caches
+.mypy_cache/
+.pytest_cache/
+
+# IDE metadata
+.idea/
+.vscode/
