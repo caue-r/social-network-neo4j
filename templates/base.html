@@ -12,10 +12,18 @@
       <div class="header-actions">
         {% set header_user = session.get("auth_user") %}
         {% if header_user %}
-          <a class="profile-button" href="{{ url_for('profile') }}" title="Meu perfil">
-            &#128100;
-            <span>@{{ header_user.username }}</span>
-          </a>
+          <div class="profile-menu">
+            <button type="button" class="profile-button" data-profile-menu-toggle>
+              &#128100;
+              <span>@{{ header_user.username }}</span>
+            </button>
+            <div class="profile-dropdown" id="profile-dropdown">
+              <a href="{{ url_for('profile') }}">Ver perfil</a>
+              <form method="post" action="{{ url_for('logout') }}">
+                <button type="submit">Sair</button>
+              </form>
+            </div>
+          </div>
         {% endif %}
       </div>
     </header>
@@ -29,5 +37,28 @@
       {% endwith %}
       {% block content %}{% endblock %}
     </main>
+    <script>
+      (function () {
+        const toggle = document.querySelector("[data-profile-menu-toggle]");
+        const dropdown = document.getElementById("profile-dropdown");
+        if (!toggle || !dropdown) {
+          return;
+        }
+        function closeMenu(event) {
+          if (!dropdown.contains(event.target) && event.target !== toggle) {
+            dropdown.classList.remove("open");
+            document.removeEventListener("click", closeMenu);
+          }
+        }
+        toggle.addEventListener("click", () => {
+          dropdown.classList.toggle("open");
+          if (dropdown.classList.contains("open")) {
+            setTimeout(() => document.addEventListener("click", closeMenu), 0);
+          } else {
+            document.removeEventListener("click", closeMenu);
+          }
+        });
+      })();
+    </script>
   </body>
 </html>

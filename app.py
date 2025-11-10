@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 from contextlib import contextmanager
+from datetime import datetime
 from functools import wraps
 from typing import Iterator, List, Optional
 
@@ -77,6 +78,22 @@ def render_admin_dashboard(**context):
     }
     default_context.update(context)
     return render_template("admin.html", **default_context)
+
+
+@app.template_filter("short_datetime")
+def short_datetime(value):
+    """Format ISO timestamps as dd/mm/yyyy HH:MM."""
+    if not value:
+        return ""
+    if isinstance(value, datetime):
+        dt = value
+    else:
+        try:
+            cleaned = value.replace("Z", "+00:00")
+            dt = datetime.fromisoformat(cleaned)
+        except Exception:  # pragma: no cover - formatting fallback
+            return value
+    return dt.strftime("%d/%m/%Y %H:%M")
 
 
 @app.route("/", methods=["GET"])
