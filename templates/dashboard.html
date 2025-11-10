@@ -1,5 +1,64 @@
 {% extends "base.html" %}
 {% block content %}
+  <style>
+    .fab {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 3.5rem;
+      height: 3.5rem;
+      border-radius: 50%;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      font-size: 2rem;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 15px 30px rgba(37, 99, 235, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .fab:hover {
+      background: #1e3a8a;
+    }
+    .post-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      z-index: 50;
+    }
+    .post-modal-backdrop.active {
+      display: flex;
+    }
+    .post-modal {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.5rem;
+      width: min(520px, 100%);
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.35);
+    }
+    .post-modal header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .post-modal header h3 {
+      margin: 0;
+    }
+    .post-modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+  </style>
+
   <section>
     <h2>Painel da rede</h2>
     <div class="auth-status">
@@ -17,16 +76,6 @@
       <input id="follow-target" name="follows" placeholder="ex: bob" required>
 
       <button type="submit">Seguir</button>
-    </form>
-  </section>
-
-  <section>
-    <h2>Criar post</h2>
-    <form method="post" action="{{ url_for('create_post') }}">
-      <label for="post-content">Conteúdo</label>
-      <textarea id="post-content" name="content" rows="3" placeholder="Compartilhe algo" required></textarea>
-
-      <button type="submit">Publicar</button>
     </form>
   </section>
 
@@ -57,4 +106,50 @@
       </div>
     {% endif %}
   </section>
+
+  <button type="button" class="fab" id="open-post-modal" aria-label="Criar post">+</button>
+
+  <div class="post-modal-backdrop" id="post-modal">
+    <div class="post-modal">
+      <header>
+        <h3>Novo post</h3>
+        <button type="button" class="post-modal-close" id="close-post-modal" aria-label="Fechar pop-up">&times;</button>
+      </header>
+      <form method="post" action="{{ url_for('create_post') }}">
+        <label for="modal-post-content">Conteúdo</label>
+        <textarea id="modal-post-content" name="content" rows="4" placeholder="Compartilhe algo" required></textarea>
+        <div style="margin-top: 1rem; display:flex; justify-content:flex-end; gap:0.75rem;">
+          <button type="button" class="secondary-button" id="cancel-post-modal">Cancelar</button>
+          <button type="submit">Publicar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const modal = document.getElementById("post-modal");
+      const open = document.getElementById("open-post-modal");
+      const close = document.getElementById("close-post-modal");
+      const cancel = document.getElementById("cancel-post-modal");
+
+      function showModal() {
+        modal.classList.add("active");
+        modal.querySelector("textarea").focus();
+      }
+
+      function hideModal() {
+        modal.classList.remove("active");
+      }
+
+      open?.addEventListener("click", showModal);
+      close?.addEventListener("click", hideModal);
+      cancel?.addEventListener("click", hideModal);
+      modal?.addEventListener("click", (event) => {
+        if (event.target === modal) {
+          hideModal();
+        }
+      });
+    })();
+  </script>
 {% endblock %}
