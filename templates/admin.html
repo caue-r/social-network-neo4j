@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block content %}
+  <style>
+    .admin-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 1.5rem;
+      background: #f9fafb;
+      margin-bottom: 1.5rem;
+    }
+    .admin-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .admin-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .admin-user-card {
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      padding: 1rem;
+      background: #fff;
+      display: grid;
+      gap: 0.75rem;
+    }
+    .admin-user-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      font-weight: 600;
+    }
+    .admin-user-card form {
+      margin: 0;
+    }
+    .admin-user-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .danger-button {
+      background: #dc2626;
+    }
+    .danger-button:hover {
+      background: #991b1b;
+    }
+  </style>
+  <section class="admin-card">
+    <h2>Painel do Administrador</h2>
+    {% if not is_admin %}
+      <p>Digite as credenciais administrativas para acessar o painel.</p>
+      <form method="post" action="{{ url_for('admin_login') }}" class="auth-form">
+        <label for="admin-username">Usuário</label>
+        <input id="admin-username" name="username" placeholder="usuário admin" required>
+
+        <label for="admin-password">Senha</label>
+        <input id="admin-password" name="password" type="password" placeholder="senha" required>
+
+        <button type="submit">Entrar como admin</button>
+      </form>
+    {% else %}
+      <div class="admin-toolbar">
+        <form method="get" action="{{ url_for('admin_dashboard') }}" class="auth-form" style="flex:1">
+          <label for="admin-search">Buscar usuários</label>
+          <input id="admin-search" name="q" placeholder="Nome, usuário ou email" value="{{ search_query }}">
+          <button type="submit">Buscar</button>
+        </form>
+        <form method="post" action="{{ url_for('admin_logout') }}">
+          <button type="submit" class="secondary-button">Sair do modo admin</button>
+        </form>
+      </div>
+
+      <section class="admin-card">
+        <h3>Usuários encontrados</h3>
+        {% if search_results %}
+          <div class="admin-grid">
+            {% for user in search_results %}
+              <div class="admin-user-card">
+                <div class="admin-user-header">
+                  <span>@{{ user.username }}</span>
+                  <span>{{ user.email or "Sem email" }}</span>
+                </div>
+                <form method="post" action="{{ url_for('admin_update_user_action') }}">
+                  <input type="hidden" name="original_username" value="{{ user.username }}">
+
+                  <label for="username-{{ loop.index }}">Usuário</label>
+                  <input id="username-{{ loop.index }}" name="username" value="{{ user.username }}" required>
+
+                  <label for="name-{{ loop.index }}">Nome</label>
+                  <input id="name-{{ loop.index }}" name="name" value="{{ user.name or '' }}">
+
+                  <label for="email-{{ loop.index }}">Email</label>
+                  <input id="email-{{ loop.index }}" name="email" type="email" value="{{ user.email or '' }}">
+
+                  <label for="bio-{{ loop.index }}">Bio</label>
+                  <textarea id="bio-{{ loop.index }}" name="bio" rows="3">{{ user.bio or '' }}</textarea>
+
+                  <label for="password-{{ loop.index }}">Nova senha (opcional)</label>
+                  <input id="password-{{ loop.index }}" name="password" type="password" autocomplete="new-password" placeholder="Deixe em branco para manter">
+
+                  <div class="admin-user-actions">
+                    <button type="submit">Salvar alterações</button>
+                  </div>
+                </form>
+                <form method="post" action="{{ url_for('admin_delete_user_action') }}" onsubmit="return confirm('Confirma a exclusão de {{ user.username }}?');">
+                  <input type="hidden" name="username" value="{{ user.username }}">
+                  <button type="submit" class="danger-button">Excluir usuário</button>
+                </form>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="empty-feed">Nenhum usuário encontrado para o termo informado.</p>
+        {% endif %}
+      </section>
+
+      <section class="admin-card">
+        <h3>Adicionar novo usuário</h3>
+        <form method="post" action="{{ url_for('admin_create_user_action') }}" class="auth-form">
+          <label for="create-username">Usuário *</label>
+          <input id="create-username" name="username" required>
+
+          <label for="create-name">Nome</label>
+          <input id="create-name" name="name">
+
+          <label for="create-email">Email</label>
+          <input id="create-email" name="email" type="email" placeholder="opcional">
+
+          <label for="create-bio">Bio</label>
+          <textarea id="create-bio" name="bio" rows="3" placeholder="opcional"></textarea>
+
+          <label for="create-password">Senha *</label>
+          <input id="create-password" name="password" type="password" required>
+
+          <button type="submit">Criar usuário</button>
+        </form>
+      </section>
+    {% endif %}
+  </section>
+{% endblock %}
