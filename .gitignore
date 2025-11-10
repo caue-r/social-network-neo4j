@@ -1,8 +1,5 @@
 # Python bytecode / cache
 __pycache__/
-social_network/__pycache__/
-social_network\__pycache__
-/social_network/__pycache__/
 *.py[cod]
 *.pyc
 
