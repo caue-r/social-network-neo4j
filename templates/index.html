@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+  <section>
+    <h2>Criar ou atualizar usuário</h2>
+    <form method="post" action="{{ url_for('create_user') }}">
+      <label for="create-username">Username</label>
+      <input id="create-username" name="username" placeholder="ex: alice" required>
+
+      <label for="create-name">Nome</label>
+      <input id="create-name" name="name" placeholder="Nome completo" required>
+
+      <label for="create-bio">Bio</label>
+      <textarea id="create-bio" name="bio" rows="3" placeholder="Fale um pouco sobre o usuário"></textarea>
+
+      <button type="submit">Salvar usuário</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Seguir alguém</h2>
+    <form method="post" action="{{ url_for('follow') }}">
+      <label for="follow-username">Quem segue</label>
+      <input id="follow-username" name="username" placeholder="ex: alice" required>
+
+      <label for="follow-target">Quem será seguido</label>
+      <input id="follow-target" name="follows" placeholder="ex: bob" required>
+
+      <button type="submit">Seguir</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Criar post</h2>
+    <form method="post" action="{{ url_for('create_post') }}">
+      <label for="post-username">Autor</label>
+      <input id="post-username" name="username" placeholder="ex: alice" required>
+
+      <label for="post-content">Conteúdo</label>
+      <textarea id="post-content" name="content" rows="3" placeholder="Compartilhe algo" required></textarea>
+
+      <button type="submit">Publicar</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Feed</h2>
+    <form method="post" action="{{ url_for('fetch_feed') }}">
+      <label for="feed-username">Ver feed de</label>
+      <input id="feed-username" name="username" placeholder="ex: alice" value="{{ feed_username or '' }}" required>
+
+      <label for="feed-limit">Quantidade de posts</label>
+      <input id="feed-limit" type="number" min="1" max="100" name="limit" value="{{ feed_limit or 25 }}">
+
+      <button type="submit">Buscar feed</button>
+    </form>
+
+    {% if feed is not none %}
+      <div style="margin-top: 1.5rem;">
+        {% if feed %}
+          {% for post in feed %}
+            <article class="feed-card">
+              <h4>@{{ post.username }} &middot; {{ post.name or "Sem nome" }}</h4>
+              <p>{{ post.content }}</p>
+              <small>{{ post.created_at }}</small>
+            </article>
+          {% endfor %}
+        {% else %}
+          <div class="empty-feed">
+            Nenhum post encontrado para este feed.
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}
