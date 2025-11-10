@@ -59,7 +59,7 @@
         {% for post in posts %}
           <article class="feed-card">
             <p>{{ post.content }}</p>
-            <small>{{ post.created_at }}</small>
+            <small>{{ post.created_at | short_datetime }}</small>
           </article>
         {% endfor %}
       </div>
