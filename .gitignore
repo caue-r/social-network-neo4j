@@ -2,6 +2,7 @@
 __pycache__/
 social_network/__pycache__/
 social_network\__pycache__
+/social_network/__pycache__/
 *.py[cod]
 *.pyc
 
