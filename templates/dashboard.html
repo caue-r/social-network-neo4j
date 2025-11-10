@@ -1,103 +1,5 @@
 {% extends "base.html" %}
 {% block content %}
-  <style>
-    .fab {
-      position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      width: 3.5rem;
-      height: 3.5rem;
-      border-radius: 50%;
-      background: #2563eb;
-      color: #fff;
-      border: none;
-      font-size: 2rem;
-      line-height: 1;
-      cursor: pointer;
-      box-shadow: 0 15px 30px rgba(37, 99, 235, 0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .fab:hover {
-      background: #1e3a8a;
-    }
-    .post-modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.55);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-      z-index: 50;
-    }
-    .post-modal-backdrop.active {
-      display: flex;
-    }
-    .post-modal {
-      background: #fff;
-      border-radius: 12px;
-      padding: 1.5rem;
-      width: min(520px, 100%);
-      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.35);
-    }
-    .post-modal header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-    .post-modal header h3 {
-      margin: 0;
-    }
-    .post-modal-close {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-    }
-    .search-bar {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .search-bar input {
-      flex: 1;
-      min-width: 220px;
-    }
-    .user-search-results {
-      margin-top: 1rem;
-      display: grid;
-      gap: 0.75rem;
-    }
-    .user-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 10px;
-      padding: 1rem;
-      background: #fff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .user-card strong {
-      display: block;
-    }
-    .user-card p {
-      margin: 0.25rem 0 0;
-      color: #4b5563;
-    }
-    .unfollow-button {
-      background: #dc2626;
-    }
-    .unfollow-button:hover {
-      background: #991b1b;
-    }
-  </style>
-
   <section>
     <h2>Painel da rede</h2>
     <div class="auth-status">
@@ -111,7 +13,7 @@
   <section>
     <h2>Buscar usuários</h2>
     <form method="get" action="{{ url_for('dashboard') }}" class="search-bar">
-      <label for="search-user" style="display:none;">Buscar usuário</label>
+      <label class="sr-only" for="search-user">Buscar usuário</label>
       <input id="search-user" name="search" placeholder="Procure por @usuário ou nome" value="{{ search_query }}">
       <button type="submit">Buscar</button>
     </form>
@@ -129,7 +31,7 @@
               </div>
               {% set is_following = user.username in following_usernames %}
               {% if user.username == auth_user.username %}
-                <span style="font-weight:600; color:#10b981;">Este é você</span>
+                <span class="self-pill">Este é você</span>
               {% elif is_following %}
                 <form method="post" action="{{ url_for('unfollow') }}">
                   <input type="hidden" name="follows" value="{{ user.username }}">
@@ -174,7 +76,7 @@
     </form>
 
     {% if feed is not none %}
-      <div style="margin-top: 1.5rem;">
+      <div class="feed-list">
         {% if feed %}
           {% for post in feed %}
             <article class="feed-card">
@@ -203,7 +105,7 @@
       <form method="post" action="{{ url_for('create_post') }}">
         <label for="modal-post-content">Conteúdo</label>
         <textarea id="modal-post-content" name="content" rows="4" placeholder="Compartilhe algo" required></textarea>
-        <div style="margin-top: 1rem; display:flex; justify-content:flex-end; gap:0.75rem;">
+        <div class="modal-actions">
           <button type="button" class="secondary-button" id="cancel-post-modal">Cancelar</button>
           <button type="submit">Publicar</button>
         </div>
