@@ -43,6 +43,21 @@ def add_follow(client: Neo4jClient, username: str, follows: str) -> None:
         raise ValueError("Usuário(s) não encontrado(s) para criar a relação de follow.")
 
 
+def remove_follow(client: Neo4jClient, username: str, unfollow: str) -> None:
+    """Remove a FOLLOWS relationship between two users."""
+    result = client.execute_write(
+        """
+        MATCH (source:User {username: $username})-[r:FOLLOWS]->(target:User {username: $unfollow})
+        DELETE r
+        RETURN source.username AS source, target.username AS target
+        """,
+        username=username,
+        unfollow=unfollow,
+    )
+    if not result["records"]:
+        raise ValueError("Relacionamento de follow não encontrado.")
+
+
 def list_following(client: Neo4jClient, username: str) -> List[Dict]:
     """List the accounts a user follows."""
     records = client.execute_read(

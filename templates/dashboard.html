@@ -90,6 +90,12 @@
       margin: 0.25rem 0 0;
       color: #4b5563;
     }
+    .unfollow-button {
+      background: #dc2626;
+    }
+    .unfollow-button:hover {
+      background: #991b1b;
+    }
   </style>
 
   <section>
@@ -121,10 +127,22 @@
                   <p>{{ user.bio }}</p>
                 {% endif %}
               </div>
-              <form method="post" action="{{ url_for('follow') }}">
-                <input type="hidden" name="follows" value="{{ user.username }}">
-                <button type="submit">Seguir</button>
-              </form>
+              {% set is_following = user.username in following_usernames %}
+              {% if user.username == auth_user.username %}
+                <span style="font-weight:600; color:#10b981;">Este é você</span>
+              {% elif is_following %}
+                <form method="post" action="{{ url_for('unfollow') }}">
+                  <input type="hidden" name="follows" value="{{ user.username }}">
+                  <input type="hidden" name="redirect_search" value="{{ search_query }}">
+                  <button type="submit" class="unfollow-button">Deixar de seguir</button>
+                </form>
+              {% else %}
+                <form method="post" action="{{ url_for('follow') }}">
+                  <input type="hidden" name="follows" value="{{ user.username }}">
+                  <input type="hidden" name="redirect_search" value="{{ search_query }}">
+                  <button type="submit">Seguir</button>
+                </form>
+              {% endif %}
             </div>
           {% endfor %}
         {% else %}
