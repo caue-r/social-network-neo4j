@@ -1,54 +1,5 @@
 {% extends "base.html" %}
 {% block content %}
-  <style>
-    .admin-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 1.5rem;
-      background: #f9fafb;
-      margin-bottom: 1.5rem;
-    }
-    .admin-grid {
-      display: grid;
-      gap: 1rem;
-    }
-    .admin-toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .admin-user-card {
-      border: 1px solid #d1d5db;
-      border-radius: 12px;
-      padding: 1rem;
-      background: #fff;
-      display: grid;
-      gap: 0.75rem;
-    }
-    .admin-user-header {
-      display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-      flex-wrap: wrap;
-      font-weight: 600;
-    }
-    .admin-user-card form {
-      margin: 0;
-    }
-    .admin-user-actions {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-    .danger-button {
-      background: #dc2626;
-    }
-    .danger-button:hover {
-      background: #991b1b;
-    }
-  </style>
   <section class="admin-card">
     <h2>Painel do Administrador</h2>
     {% if not is_admin %}
@@ -64,7 +15,7 @@
       </form>
     {% else %}
       <div class="admin-toolbar">
-        <form method="get" action="{{ url_for('admin_dashboard') }}" class="auth-form" style="flex:1">
+        <form method="get" action="{{ url_for('admin_dashboard') }}" class="search-bar">
           <label for="admin-search">Buscar usuários</label>
           <input id="admin-search" name="q" placeholder="Nome, usuário ou email" value="{{ search_query }}">
           <button type="submit">Buscar</button>
