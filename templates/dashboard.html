@@ -1,100 +1,121 @@
 {% extends "base.html" %}
 {% block content %}
-  <section>
-    <h2>Painel da rede</h2>
-    <div class="auth-status">
-      <p>Você está logado como <strong>@{{ auth_user.username }}</strong> ({{ auth_user.name or auth_user.username }})</p>
-      <form method="post" action="{{ url_for('logout') }}">
-        <button type="submit">Sair</button>
-      </form>
-    </div>
-  </section>
+  <div class="dashboard-layout">
+    <div class="dashboard-main">
+      <div class="panel-card hero-card">
+        <div>
+          <p class="hero-eyebrow">Bem-vindo de volta</p>
+          <h2>@{{ auth_user.username }}</h2>
+          <p class="hero-subtitle">{{ auth_user.name or "Usuário sem nome" }}</p>
+        </div>
+        <div class="hero-actions">
+          <button type="button" data-open-post-modal>Escrever post</button>
+          <form method="post" action="{{ url_for('logout') }}" class="inline-form">
+            <button type="submit" class="secondary-button">Sair</button>
+          </form>
+        </div>
+      </div>
 
-  <section>
-    <h2>Buscar usuários</h2>
-    <form method="get" action="{{ url_for('dashboard') }}" class="search-bar">
-      <label class="sr-only" for="search-user">Buscar usuário</label>
-      <input id="search-user" name="search" placeholder="Procure por @usuário ou nome" value="{{ search_query }}">
-      <button type="submit">Buscar</button>
-    </form>
-    {% if search_query %}
-      <div class="user-search-results">
-        {% if search_results %}
-          {% for user in search_results %}
-            <div class="user-card">
-              <div>
-                <strong>@{{ user.username }}</strong>
-                <span>{{ user.name or "Sem nome" }}</span>
-                {% if user.bio %}
-                  <p>{{ user.bio }}</p>
-                {% endif %}
+      {% if search_query %}
+        <div class="panel-card search-results-card">
+          <div class="panel-title">
+            <h3>Resultados para "{{ search_query }}"</h3>
+            <span class="text-muted">{{ search_results|length }} resultado(s)</span>
+          </div>
+          <div class="user-search-results">
+            {% if search_results %}
+              {% for user in search_results %}
+                <div class="user-card">
+                  <div>
+                    <strong>@{{ user.username }}</strong>
+                    <span>{{ user.name or "Sem nome" }}</span>
+                    {% if user.bio %}
+                      <p>{{ user.bio }}</p>
+                    {% endif %}
+                  </div>
+                  {% set is_following = user.username in following_usernames %}
+                  {% if user.username == auth_user.username %}
+                    <span class="self-pill">Este é você</span>
+                  {% elif is_following %}
+                    <form method="post" action="{{ url_for('unfollow') }}">
+                      <input type="hidden" name="follows" value="{{ user.username }}">
+                      <input type="hidden" name="redirect_search" value="{{ search_query }}">
+                      <button type="submit" class="unfollow-button">Deixar de seguir</button>
+                    </form>
+                  {% else %}
+                    <form method="post" action="{{ url_for('follow') }}">
+                      <input type="hidden" name="follows" value="{{ user.username }}">
+                      <input type="hidden" name="redirect_search" value="{{ search_query }}">
+                      <button type="submit">Seguir</button>
+                    </form>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="empty-feed">
+                Nenhum usuário encontrado para "{{ search_query }}".
               </div>
-              {% set is_following = user.username in following_usernames %}
-              {% if user.username == auth_user.username %}
-                <span class="self-pill">Este é você</span>
-              {% elif is_following %}
-                <form method="post" action="{{ url_for('unfollow') }}">
-                  <input type="hidden" name="follows" value="{{ user.username }}">
-                  <input type="hidden" name="redirect_search" value="{{ search_query }}">
-                  <button type="submit" class="unfollow-button">Deixar de seguir</button>
-                </form>
-              {% else %}
-                <form method="post" action="{{ url_for('follow') }}">
-                  <input type="hidden" name="follows" value="{{ user.username }}">
-                  <input type="hidden" name="redirect_search" value="{{ search_query }}">
-                  <button type="submit">Seguir</button>
-                </form>
-              {% endif %}
-            </div>
-          {% endfor %}
-        {% else %}
-          <div class="empty-feed">
-            Nenhum usuário encontrado para "{{ search_query }}".
+            {% endif %}
           </div>
+        </div>
+      {% endif %}
+
+      <div class="panel-card feed-panel">
+        <div class="feed-header">
+          <div>
+            <p class="text-muted">Timeline</p>
+            <h3>Últimos posts</h3>
+          </div>
+          <form method="post" action="{{ url_for('fetch_feed') }}" class="feed-filter">
+            <label class="sr-only" for="feed-limit">Quantidade</label>
+            <input id="feed-limit" type="number" min="1" max="100" name="limit" value="{{ feed_limit or 25 }}" />
+            <button type="submit" class="secondary-button">Atualizar</button>
+          </form>
+        </div>
+        {% if feed is not none %}
+          <div class="feed-list">
+            {% if feed %}
+              {% for post in feed %}
+                <article class="feed-card">
+                  <h4>@{{ post.username }} &middot; {{ post.name or "Sem nome" }}</h4>
+                  <p>{{ post.content }}</p>
+                  <small>{{ post.created_at }}</small>
+                </article>
+              {% endfor %}
+            {% else %}
+              <div class="empty-feed">
+                Nenhum post encontrado para este feed.
+              </div>
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="empty-feed">Use o botão acima para carregar seu feed.</div>
         {% endif %}
       </div>
-    {% endif %}
-  </section>
+    </div>
 
-  <section>
-    <h2>Seguir alguém</h2>
-    <form method="post" action="{{ url_for('follow') }}">
-      <label for="follow-target">Quem você quer seguir</label>
-      <input id="follow-target" name="follows" placeholder="ex: bob" required>
-
-      <button type="submit">Seguir</button>
-    </form>
-  </section>
-
-  <section>
-    <h2>Ver meu feed</h2>
-    <form method="post" action="{{ url_for('fetch_feed') }}">
-      <label for="feed-limit">Quantidade de posts</label>
-      <input id="feed-limit" type="number" min="1" max="100" name="limit" value="{{ feed_limit or 25 }}">
-
-      <button type="submit">Atualizar feed</button>
-    </form>
-
-    {% if feed is not none %}
-      <div class="feed-list">
-        {% if feed %}
-          {% for post in feed %}
-            <article class="feed-card">
-              <h4>@{{ post.username }} &middot; {{ post.name or "Sem nome" }}</h4>
-              <p>{{ post.content }}</p>
-              <small>{{ post.created_at }}</small>
-            </article>
-          {% endfor %}
-        {% else %}
-          <div class="empty-feed">
-            Nenhum post encontrado para este feed.
-          </div>
-        {% endif %}
+    <aside class="dashboard-side">
+      <div class="panel-card side-card">
+        <h3>Buscar usuários</h3>
+        <form method="get" action="{{ url_for('dashboard') }}" class="search-bar">
+          <label for="search-user">Nome ou @</label>
+          <input id="search-user" name="search" placeholder="Procure por @usuário ou nome" value="{{ search_query }}">
+          <button type="submit">Buscar</button>
+        </form>
       </div>
-    {% endif %}
-  </section>
 
-  <button type="button" class="fab" id="open-post-modal" aria-label="Criar post">+</button>
+      <div class="panel-card side-card">
+        <h3>Seguir alguém</h3>
+        <form method="post" action="{{ url_for('follow') }}" class="stacked-form">
+          <label for="follow-target">Usuário</label>
+          <input id="follow-target" name="follows" placeholder="ex: bob" required>
+          <button type="submit">Seguir</button>
+        </form>
+      </div>
+    </aside>
+  </div>
+
+  <button type="button" class="fab" id="open-post-modal" data-open-post-modal aria-label="Criar post">+</button>
 
   <div class="post-modal-backdrop" id="post-modal">
     <div class="post-modal">
@@ -116,23 +137,29 @@
   <script>
     (function () {
       const modal = document.getElementById("post-modal");
-      const open = document.getElementById("open-post-modal");
       const close = document.getElementById("close-post-modal");
       const cancel = document.getElementById("cancel-post-modal");
+      const openButtons = document.querySelectorAll("[data-open-post-modal]");
+
+      if (!modal) {
+        return;
+      }
+
+      const textarea = modal.querySelector("textarea");
 
       function showModal() {
         modal.classList.add("active");
-        modal.querySelector("textarea").focus();
+        textarea?.focus();
       }
 
       function hideModal() {
         modal.classList.remove("active");
       }
 
-      open?.addEventListener("click", showModal);
+      openButtons.forEach((button) => button.addEventListener("click", showModal));
       close?.addEventListener("click", hideModal);
       cancel?.addEventListener("click", hideModal);
-      modal?.addEventListener("click", (event) => {
+      modal.addEventListener("click", (event) => {
         if (event.target === modal) {
           hideModal();
         }
