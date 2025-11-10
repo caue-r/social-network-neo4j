@@ -82,18 +82,35 @@ def render_admin_dashboard(**context):
 
 @app.template_filter("short_datetime")
 def short_datetime(value):
-    """Format ISO timestamps as dd/mm/yyyy HH:MM."""
+    """Format ISO timestamps as DD/MM/YY às HH:MM."""
     if not value:
         return ""
     if isinstance(value, datetime):
         dt = value
     else:
         try:
-            cleaned = value.replace("Z", "+00:00")
+            cleaned = _normalize_iso_datetime(str(value))
             dt = datetime.fromisoformat(cleaned)
         except Exception:  # pragma: no cover - formatting fallback
             return value
-    return dt.strftime("%d/%m/%Y %H:%M")
+    return dt.strftime("%d/%m/%y às %H:%M")
+
+
+def _normalize_iso_datetime(raw: str) -> str:
+    """Trim excessive fractional seconds so datetime.fromisoformat can parse."""
+    cleaned = raw.replace("Z", "+00:00")
+    if "." not in cleaned:
+        return cleaned
+    base, remainder = cleaned.split(".", 1)
+    tz_sign_pos = max(remainder.find("+"), remainder.find("-"))
+    if tz_sign_pos != -1:
+        frac = remainder[:tz_sign_pos]
+        tz = remainder[tz_sign_pos:]
+    else:
+        frac = remainder
+        tz = ""
+    frac = (frac + "000000")[:6]
+    return f"{base}.{frac}{tz}"
 
 
 @app.route("/", methods=["GET"])
