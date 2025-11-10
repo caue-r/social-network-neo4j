@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+  <section class="auth-section">
+    <h2>Criar uma conta</h2>
+    <p>Preencha os dados abaixo para participar da rede social Neo4j.</p>
+    <form method="post" action="{{ url_for('register') }}" class="auth-form">
+      <label for="register-name">Nome completo</label>
+      <input id="register-name" name="name" placeholder="ex: Maria Silva" required>
+
+      <label for="register-email">Email</label>
+      <input id="register-email" name="email" type="email" placeholder="voce@email.com" required>
+
+      <label for="register-username">Usuário</label>
+      <input id="register-username" name="username" placeholder="ex: maria" required>
+
+      <label for="register-password">Senha</label>
+      <input id="register-password" name="password" type="password" minlength="4" required>
+
+      <button type="submit">Realizar cadastro</button>
+    </form>
+    <div class="auth-links">
+      <a class="secondary-button" href="{{ url_for('login_page') }}">Voltar para o login</a>
+    </div>
+  </section>
+{% endblock %}
