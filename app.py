@@ -121,6 +121,32 @@ def dashboard():
         following_usernames=following_usernames,
     )
 
+
+@app.get("/profile")
+@login_required
+def profile():
+    auth_user = session["auth_user"]
+    profile_user = {}
+    followers = []
+    following = []
+    posts = []
+    try:
+        with get_client() as client:
+            profile_user = service.get_user_profile(client, auth_user["username"])
+            followers = service.list_followers(client, auth_user["username"])
+            following = service.list_following(client, auth_user["username"])
+            posts = service.list_user_posts(client, auth_user["username"])
+    except Exception as exc:  # pragma: no cover - feedback ao usuário
+        flash(f"Erro ao carregar perfil: {exc}", "error")
+    return render_template(
+        "profile.html",
+        auth_user=auth_user,
+        profile_user=profile_user,
+        followers=followers,
+        following=following,
+        posts=posts,
+    )
+
 @app.get("/admin")
 def admin_dashboard():
     search_query = request.args.get("q", "").strip()
@@ -198,6 +224,21 @@ def unfollow():
     else:
         flash(f"@{auth_user['username']} deixou de seguir @{unfollow_username}.", "success")
     return redirect(target_url)
+
+
+@app.post("/profile/bio")
+@login_required
+def update_bio():
+    bio = request.form.get("bio", "").strip()
+    auth_user = session["auth_user"]
+    try:
+        with get_client() as client:
+            service.update_user_bio(client, auth_user["username"], bio)
+    except Exception as exc:  # pragma: no cover - feedback ao usuário
+        flash(f"Erro ao atualizar bio: {exc}", "error")
+    else:
+        flash("Bio atualizada com sucesso.", "success")
+    return redirect(url_for("profile"))
 
 
 @app.post("/create-post")
