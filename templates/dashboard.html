@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+  <section>
+    <h2>Painel da rede</h2>
+    <div class="auth-status">
+      <p>Você está logado como <strong>@{{ auth_user.username }}</strong> ({{ auth_user.name or auth_user.username }})</p>
+      <form method="post" action="{{ url_for('logout') }}">
+        <button type="submit">Sair</button>
+      </form>
+    </div>
+  </section>
+
+  <section>
+    <h2>Seguir alguém</h2>
+    <form method="post" action="{{ url_for('follow') }}">
+      <label for="follow-target">Quem você quer seguir</label>
+      <input id="follow-target" name="follows" placeholder="ex: bob" required>
+
+      <button type="submit">Seguir</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Criar post</h2>
+    <form method="post" action="{{ url_for('create_post') }}">
+      <label for="post-content">Conteúdo</label>
+      <textarea id="post-content" name="content" rows="3" placeholder="Compartilhe algo" required></textarea>
+
+      <button type="submit">Publicar</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Ver meu feed</h2>
+    <form method="post" action="{{ url_for('fetch_feed') }}">
+      <label for="feed-limit">Quantidade de posts</label>
+      <input id="feed-limit" type="number" min="1" max="100" name="limit" value="{{ feed_limit or 25 }}">
+
+      <button type="submit">Atualizar feed</button>
+    </form>
+
+    {% if feed is not none %}
+      <div style="margin-top: 1.5rem;">
+        {% if feed %}
+          {% for post in feed %}
+            <article class="feed-card">
+              <h4>@{{ post.username }} &middot; {{ post.name or "Sem nome" }}</h4>
+              <p>{{ post.content }}</p>
+              <small>{{ post.created_at }}</small>
+            </article>
+          {% endfor %}
+        {% else %}
+          <div class="empty-feed">
+            Nenhum post encontrado para este feed.
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

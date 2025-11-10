@@ -1,7 +1,7 @@
 """Domain logic for the simple social network."""
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from .neo4j_client import Neo4jClient
 
@@ -13,7 +13,8 @@ def create_user(client: Neo4jClient, username: str, name: str, bio: str = "") ->
         MERGE (u:User {username: $username})
         ON CREATE SET u.created_at = datetime()
         SET u.name = $name,
-            u.bio = $bio
+            u.bio = $bio,
+            u.username_lower = toLower($username)
         RETURN u { .* } AS user
         """,
         username=username,
@@ -110,3 +111,76 @@ def fetch_feed(client: Neo4jClient, username: str, limit: int = 25) -> List[Dict
         if not viewer_records:
             raise ValueError("Usuário não encontrado para consultar o feed.")
     return feed
+
+
+def register_account(
+    client: Neo4jClient,
+    *,
+    name: str,
+    email: str,
+    username: str,
+    password_hash: str,
+) -> Dict:
+    """Register a brand-new user enforcing unique username/email."""
+    conflicts = list(
+        client.execute_read(
+            """
+            MATCH (u:User)
+            WHERE toLower(u.username) = $username_lower
+               OR toLower(coalesce(u.email, '')) = $email_lower
+            RETURN u.username AS username, u.email AS email
+            LIMIT 1
+            """,
+            username_lower=username.lower(),
+            email_lower=email.lower(),
+        )
+    )
+    if conflicts:
+        raise ValueError("Já existe um usuário cadastrado com este usuário ou email.")
+
+    result = client.execute_write(
+        """
+        CREATE (u:User {
+            id: randomUUID(),
+            username: $username,
+            username_lower: toLower($username),
+            name: $name,
+            email: $email,
+            email_lower: toLower($email),
+            password_hash: $password_hash,
+            created_at: datetime()
+        })
+        RETURN u { .* } AS user
+        """,
+        username=username,
+        name=name,
+        email=email,
+        password_hash=password_hash,
+    )
+    if not result["records"]:
+        raise RuntimeError("Não foi possível criar o usuário.")
+    return result["records"][0]["user"]
+
+
+def find_user_for_login(client: Neo4jClient, identifier: str) -> Optional[Dict]:
+    """Fetch a user (including password hash) by username or email."""
+    records = list(
+        client.execute_read(
+            """
+            MATCH (u:User)
+            WHERE toLower(u.username) = $identifier
+               OR toLower(coalesce(u.email, '')) = $identifier
+            RETURN u {
+                .username,
+                .name,
+                .email,
+                .password_hash
+            } AS user
+            LIMIT 1
+            """,
+            identifier=identifier.lower(),
+        )
+    )
+    if not records:
+        return None
+    return records[0]["user"]
