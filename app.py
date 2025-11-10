@@ -62,6 +62,7 @@ def render_dashboard(**context):
         "auth_user": auth_user,
         "search_results": [],
         "search_query": "",
+        "following_usernames": set(),
     }
     default_context.update(context)
     return render_template("dashboard.html", **default_context)
@@ -104,13 +105,21 @@ def register_page():
 def dashboard():
     search_query = request.args.get("search", "").strip()
     search_results: List[dict] = []
-    if search_query:
-        try:
-            with get_client() as client:
+    following_usernames = set()
+    auth_user = session.get("auth_user")
+    try:
+        with get_client() as client:
+            following = service.list_following(client, auth_user["username"])
+            following_usernames = {user["username"] for user in following}
+            if search_query:
                 search_results = service.search_users(client, search_query)
-        except Exception as exc:  # pragma: no cover - feedback ao usuário
-            flash(f"Erro ao buscar usuários: {exc}", "error")
-    return render_dashboard(search_results=search_results, search_query=search_query)
+    except Exception as exc:  # pragma: no cover - feedback ao usuário
+        flash(f"Erro ao buscar usuários: {exc}", "error")
+    return render_dashboard(
+        search_results=search_results,
+        search_query=search_query,
+        following_usernames=following_usernames,
+    )
 
 @app.get("/admin")
 def admin_dashboard():
@@ -150,11 +159,14 @@ def create_user():
 @login_required
 def follow():
     follows = request.form.get("follows", "").strip()
+    redirect_search = request.form.get("redirect_search", "").strip()
     auth_user = session["auth_user"]
+
+    target_url = url_for("dashboard", search=redirect_search) if redirect_search else url_for("dashboard")
 
     if not follows:
         flash("Informe quem será seguido.", "error")
-        return redirect(url_for("dashboard"))
+        return redirect(target_url)
 
     try:
         with get_client() as client:
@@ -163,7 +175,29 @@ def follow():
         flash(f"Erro ao seguir usuário: {exc}", "error")
     else:
         flash(f"@{auth_user['username']} agora segue @{follows}.", "success")
-    return redirect(url_for("dashboard"))
+    return redirect(target_url)
+
+
+@app.post("/unfollow")
+@login_required
+def unfollow():
+    unfollow_username = request.form.get("follows", "").strip()
+    redirect_search = request.form.get("redirect_search", "").strip()
+    auth_user = session["auth_user"]
+    target_url = url_for("dashboard", search=redirect_search) if redirect_search else url_for("dashboard")
+
+    if not unfollow_username:
+        flash("Informe quem será deixado de seguir.", "error")
+        return redirect(target_url)
+
+    try:
+        with get_client() as client:
+            service.remove_follow(client, auth_user["username"], unfollow_username)
+    except Exception as exc:  # pragma: no cover - feedback ao usuário
+        flash(f"Erro ao deixar de seguir usuário: {exc}", "error")
+    else:
+        flash(f"@{auth_user['username']} deixou de seguir @{unfollow_username}.", "success")
+    return redirect(target_url)
 
 
 @app.post("/create-post")
