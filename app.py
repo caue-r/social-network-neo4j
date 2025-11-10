@@ -17,6 +17,8 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin")
 
 
 @contextmanager
@@ -39,6 +41,17 @@ def login_required(view):
     return wrapped
 
 
+def admin_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get("is_admin"):
+            flash("Área restrita ao administrador.", "error")
+            return redirect(url_for("admin_dashboard"))
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
 def render_dashboard(**context):
     """Render the authenticated dashboard with defaults."""
     auth_user = session.get("auth_user")
@@ -50,6 +63,17 @@ def render_dashboard(**context):
     }
     default_context.update(context)
     return render_template("dashboard.html", **default_context)
+
+
+def render_admin_dashboard(**context):
+    """Render the admin dashboard with base context."""
+    default_context = {
+        "is_admin": bool(session.get("is_admin")),
+        "search_results": [],
+        "search_query": "",
+    }
+    default_context.update(context)
+    return render_template("admin.html", **default_context)
 
 
 @app.route("/", methods=["GET"])
@@ -77,6 +101,18 @@ def register_page():
 @login_required
 def dashboard():
     return render_dashboard()
+
+@app.get("/admin")
+def admin_dashboard():
+    search_query = request.args.get("q", "").strip()
+    search_results = []
+    if session.get("is_admin"):
+        try:
+            with get_client() as client:
+                search_results = service.admin_search_users(client, search_query)
+        except Exception as exc:  # pragma: no cover - feedback ao usuário
+            flash(f"Erro ao buscar usuários: {exc}", "error")
+    return render_admin_dashboard(search_results=search_results, search_query=search_query)
 
 
 @app.post("/create-user")
@@ -228,8 +264,118 @@ def login():
 @app.post("/logout")
 def logout():
     session.pop("auth_user", None)
+    session.pop("is_admin", None)
     flash("Sessão encerrada.", "success")
     return redirect(url_for("index"))
+
+
+@app.post("/admin/login")
+def admin_login():
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "").strip()
+    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        session["is_admin"] = True
+        flash("Login de administrador realizado com sucesso.", "success")
+    else:
+        flash("Credenciais de administrador inválidas.", "error")
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.post("/admin/logout")
+@admin_required
+def admin_logout():
+    session.pop("is_admin", None)
+    flash("Sessão de administrador encerrada.", "success")
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.post("/admin/users/create")
+@admin_required
+def admin_create_user_action():
+    username = request.form.get("username", "").strip()
+    name = request.form.get("name", "").strip()
+    email = request.form.get("email", "").strip()
+    bio = request.form.get("bio", "").strip()
+    password = request.form.get("password", "").strip()
+
+    if not username or not password:
+        flash("Username e senha são obrigatórios para criar usuários.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    try:
+        password_hash = generate_password_hash(password)
+        with get_client() as client:
+            service.admin_create_user(
+                client,
+                username=username,
+                password_hash=password_hash,
+                name=name,
+                email=email or None,
+                bio=bio,
+            )
+    except Exception as exc:  # pragma: no cover - feedback ao usuário
+        flash(f"Erro ao criar usuário: {exc}", "error")
+    else:
+        flash(f"Usuário @{username} criado com sucesso.", "success")
+    return redirect(url_for("admin_dashboard", q=username))
+
+
+@app.post("/admin/users/update")
+@admin_required
+def admin_update_user_action():
+    original_username = request.form.get("original_username", "").strip()
+    if not original_username:
+        flash("Usuário original é obrigatório.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    new_username = request.form.get("username", "").strip()
+    name = request.form.get("name", "").strip()
+    email = request.form.get("email", "").strip()
+    bio = request.form.get("bio", "").strip()
+    password = request.form.get("password", "").strip()
+
+    password_hash = generate_password_hash(password) if password else None
+
+    try:
+        with get_client() as client:
+            updated_user = service.admin_update_user(
+                client,
+                username=original_username,
+                new_username=new_username if new_username and new_username != original_username else None,
+                name=name,
+                email=email,
+                bio=bio,
+                password_hash=password_hash,
+            )
+    except ValueError as exc:
+        flash(str(exc), "error")
+        return redirect(url_for("admin_dashboard", q=original_username))
+    except Exception as exc:  # pragma: no cover - feedback ao usuário
+        flash(f"Erro ao atualizar usuário: {exc}", "error")
+        return redirect(url_for("admin_dashboard", q=original_username))
+
+    flash(f"Usuário @{updated_user['username']} atualizado com sucesso.", "success")
+    return redirect(url_for("admin_dashboard", q=updated_user["username"]))
+
+
+@app.post("/admin/users/delete")
+@admin_required
+def admin_delete_user_action():
+    username = request.form.get("username", "").strip()
+    if not username:
+        flash("Informe o usuário que será removido.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    try:
+        with get_client() as client:
+            service.admin_delete_user(client, username)
+    except ValueError as exc:
+        flash(str(exc), "error")
+    except Exception as exc:  # pragma: no cover - feedback ao usuário
+        flash(f"Erro ao remover usuário: {exc}", "error")
+    else:
+        flash(f"Usuário @{username} removido com sucesso.", "success")
+    return redirect(url_for("admin_dashboard"))
 
 
 if __name__ == "__main__":

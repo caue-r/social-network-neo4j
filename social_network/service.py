@@ -184,3 +184,221 @@ def find_user_for_login(client: Neo4jClient, identifier: str) -> Optional[Dict]:
     if not records:
         return None
     return records[0]["user"]
+
+
+def admin_search_users(
+    client: Neo4jClient,
+    query: str,
+    *,
+    limit: int = 50,
+) -> List[Dict]:
+    """Search for users by username, email, or name for the admin panel."""
+    needle = (query or "").lower()
+    records = client.execute_read(
+        """
+        MATCH (u:User)
+        WHERE $needle = ''
+           OR toLower(u.username) CONTAINS $needle
+           OR toLower(coalesce(u.email, '')) CONTAINS $needle
+           OR toLower(coalesce(u.name, '')) CONTAINS $needle
+        RETURN u {
+            .username,
+            .name,
+            .email,
+            .bio,
+            .created_at
+        } AS user
+        ORDER BY u.username
+        LIMIT $limit
+        """,
+        needle=needle,
+        limit=limit,
+    )
+    return [record["user"] for record in records]
+
+
+def admin_create_user(
+    client: Neo4jClient,
+    *,
+    username: str,
+    password_hash: str,
+    name: str = "",
+    email: Optional[str] = None,
+    bio: str = "",
+) -> Dict:
+    """Create a new user from the admin panel."""
+    username_clean = username.strip()
+    if not username_clean or not password_hash:
+        raise ValueError("Usuário e senha são obrigatórios.")
+
+    email_clean = email.strip() if email else None
+    name_clean = name.strip() if name else ""
+    bio_clean = bio.strip() if bio else ""
+    _ensure_unique_identity(
+        client,
+        username_lower=username_clean.lower(),
+        email_lower=email_clean.lower() if email_clean else None,
+    )
+
+    result = client.execute_write(
+        """
+        CREATE (u:User {
+            id: randomUUID(),
+            username: $username,
+            username_lower: toLower($username),
+            name: $name,
+            email: $email,
+            email_lower: CASE
+                WHEN $email IS NULL OR $email = '' THEN NULL
+                ELSE toLower($email)
+            END,
+            bio: $bio,
+            password_hash: $password_hash,
+            created_at: datetime()
+        })
+        RETURN u { .* } AS user
+        """,
+        username=username_clean,
+        name=name_clean,
+        email=email_clean,
+        bio=bio_clean,
+        password_hash=password_hash,
+    )
+    if not result["records"]:
+        raise RuntimeError("Não foi possível criar o usuário.")
+    return result["records"][0]["user"]
+
+
+def admin_update_user(
+    client: Neo4jClient,
+    *,
+    username: str,
+    new_username: Optional[str] = None,
+    name: Optional[str] = None,
+    email: Optional[str] = None,
+    bio: Optional[str] = None,
+    password_hash: Optional[str] = None,
+) -> Dict:
+    """Update fields on a user from the admin panel."""
+    if not username:
+        raise ValueError("Usuário original é obrigatório.")
+
+    if new_username and new_username != username:
+        _ensure_unique_identity(
+            client,
+            username_lower=new_username.lower(),
+            email_lower=None,
+            exclude_username=username,
+        )
+
+    if email is not None:
+        email_clean = email.strip() or None
+        if email_clean:
+            _ensure_unique_identity(
+                client,
+                username_lower=None,
+                email_lower=email_clean.lower(),
+                exclude_username=username,
+            )
+    else:
+        email_clean = None
+
+    set_clauses = []
+    params = {"username": username}
+
+    if new_username:
+        params["new_username"] = new_username.strip()
+        if not params["new_username"]:
+            raise ValueError("O novo usuário não pode estar vazio.")
+        params["new_username_lower"] = params["new_username"].lower()
+        set_clauses.append("u.username = $new_username")
+        set_clauses.append("u.username_lower = $new_username_lower")
+
+    if name is not None:
+        params["name"] = name.strip()
+        set_clauses.append("u.name = $name")
+
+    if email is not None:
+        params["email"] = email_clean
+        params["email_lower"] = email_clean.lower() if email_clean else None
+        set_clauses.append("u.email = $email")
+        set_clauses.append("u.email_lower = $email_lower")
+
+    if bio is not None:
+        params["bio"] = bio.strip()
+        set_clauses.append("u.bio = $bio")
+
+    if password_hash:
+        params["password_hash"] = password_hash
+        set_clauses.append("u.password_hash = $password_hash")
+
+    if not set_clauses:
+        raise ValueError("Nenhum campo para atualizar.")
+
+    result = client.execute_write(
+        f"""
+        MATCH (u:User {{username: $username}})
+        SET {', '.join(set_clauses)}
+        RETURN u {{ .* }} AS user
+        """,
+        **params,
+    )
+    if not result["records"]:
+        raise ValueError("Usuário não encontrado para atualização.")
+    return result["records"][0]["user"]
+
+
+def admin_delete_user(client: Neo4jClient, username: str) -> None:
+    """Delete a user (and related nodes) from the admin panel."""
+    if not username:
+        raise ValueError("Usuário é obrigatório para exclusão.")
+    result = client.execute_write(
+        """
+        MATCH (u:User {username: $username})
+        OPTIONAL MATCH (u)-[:PUBLISHED]->(post:Post)
+        DETACH DELETE u, post
+        RETURN 1 AS deleted
+        """,
+        username=username,
+    )
+    if not result["records"]:
+        raise ValueError("Usuário não encontrado para exclusão.")
+
+
+def _ensure_unique_identity(
+    client: Neo4jClient,
+    *,
+    username_lower: Optional[str],
+    email_lower: Optional[str],
+    exclude_username: Optional[str] = None,
+) -> None:
+    """Ensure username/email uniqueness when creating/updating users."""
+    if username_lower:
+        records = client.execute_read(
+            """
+            MATCH (u:User)
+            WHERE toLower(u.username) = $username_lower
+              AND ($exclude_username IS NULL OR u.username <> $exclude_username)
+            RETURN u.username AS username
+            LIMIT 1
+            """,
+            username_lower=username_lower,
+            exclude_username=exclude_username,
+        )
+        if records:
+            raise ValueError("Já existe um usuário com este username.")
+
+    if email_lower:
+        records = client.execute_read(
+            """
+            MATCH (u:User)
+            WHERE toLower(coalesce(u.email, '')) = $email_lower
+              AND ($exclude_username IS NULL OR u.username <> $exclude_username)
+            RETURN u.username AS username
+            LIMIT 1
+            """,
+            email_lower=email_lower,
+            exclude_username=exclude_username,
+        )
+        if records:
+            raise ValueError("Já existe um usuário com este email.")
