@@ -186,6 +186,36 @@ def find_user_for_login(client: Neo4jClient, identifier: str) -> Optional[Dict]:
     return records[0]["user"]
 
 
+def search_users(
+    client: Neo4jClient,
+    query: str,
+    *,
+    limit: int = 20,
+) -> List[Dict]:
+    """Search public profiles by username or name."""
+    needle = (query or "").strip().lower()
+    if not needle:
+        return []
+
+    records = client.execute_read(
+        """
+        MATCH (u:User)
+        WHERE toLower(u.username) CONTAINS $needle
+           OR toLower(coalesce(u.name, '')) CONTAINS $needle
+        RETURN u {
+            .username,
+            .name,
+            .bio
+        } AS user
+        ORDER BY u.username
+        LIMIT $limit
+        """,
+        needle=needle,
+        limit=limit,
+    )
+    return [record["user"] for record in records]
+
+
 def admin_search_users(
     client: Neo4jClient,
     query: str,
