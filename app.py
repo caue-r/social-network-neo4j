@@ -60,6 +60,8 @@ def render_dashboard(**context):
         "feed_username": auth_user["username"] if auth_user else None,
         "feed_limit": 25,
         "auth_user": auth_user,
+        "search_results": [],
+        "search_query": "",
     }
     default_context.update(context)
     return render_template("dashboard.html", **default_context)
@@ -100,7 +102,15 @@ def register_page():
 @app.get("/dashboard")
 @login_required
 def dashboard():
-    return render_dashboard()
+    search_query = request.args.get("search", "").strip()
+    search_results: List[dict] = []
+    if search_query:
+        try:
+            with get_client() as client:
+                search_results = service.search_users(client, search_query)
+        except Exception as exc:  # pragma: no cover - feedback ao usuário
+            flash(f"Erro ao buscar usuários: {exc}", "error")
+    return render_dashboard(search_results=search_results, search_query=search_query)
 
 @app.get("/admin")
 def admin_dashboard():
