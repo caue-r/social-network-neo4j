@@ -56,7 +56,21 @@ def render_dashboard(**context):
 def index():
     if session.get("auth_user"):
         return redirect(url_for("dashboard"))
-    return render_template("index.html")
+    return redirect(url_for("login_page"))
+
+
+@app.get("/login")
+def login_page():
+    if session.get("auth_user"):
+        return redirect(url_for("dashboard"))
+    return render_template("login.html")
+
+
+@app.get("/register")
+def register_page():
+    if session.get("auth_user"):
+        return redirect(url_for("dashboard"))
+    return render_template("register.html")
 
 
 @app.get("/dashboard")
@@ -157,7 +171,7 @@ def register():
 
     if not all([name, email, username, password]):
         flash("Nome, email, usuário e senha são obrigatórios.", "error")
-        return redirect(url_for("index"))
+        return redirect(url_for("register_page"))
 
     try:
         password_hash = generate_password_hash(password)
@@ -171,11 +185,13 @@ def register():
             )
     except ValueError as exc:
         flash(str(exc), "error")
+        return redirect(url_for("register_page"))
     except Exception as exc:  # pragma: no cover - feedback ao usuário
         flash(f"Erro ao cadastrar usuário: {exc}", "error")
+        return redirect(url_for("register_page"))
     else:
         flash("Cadastro realizado com sucesso. Você já pode fazer login.", "success")
-    return redirect(url_for("index"))
+        return redirect(url_for("login_page"))
 
 
 @app.post("/login")
@@ -185,20 +201,20 @@ def login():
 
     if not identifier or not password:
         flash("Informe usuário ou email e a senha.", "error")
-        return redirect(url_for("index"))
+        return redirect(url_for("login_page"))
 
     try:
         with get_client() as client:
             user = service.find_user_for_login(client, identifier)
     except Exception as exc:  # pragma: no cover - feedback ao usuário
         flash(f"Erro ao consultar usuário: {exc}", "error")
-        return redirect(url_for("index"))
+        return redirect(url_for("login_page"))
 
     if not user or not user.get("password_hash") or not check_password_hash(
         user["password_hash"], password
     ):
         flash("Credenciais inválidas.", "error")
-        return redirect(url_for("index"))
+        return redirect(url_for("login_page"))
 
     session["auth_user"] = {
         "username": user.get("username"),
