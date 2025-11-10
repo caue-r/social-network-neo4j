@@ -73,6 +73,21 @@ def list_following(client: Neo4jClient, username: str) -> List[Dict]:
     return list(records)
 
 
+def list_followers(client: Neo4jClient, username: str) -> List[Dict]:
+    """List the accounts that follow the given user."""
+    records = client.execute_read(
+        """
+        MATCH (follower:User)-[:FOLLOWS]->(:User {username: $username})
+        RETURN follower.username AS username,
+               follower.name AS name,
+               follower.bio AS bio
+        ORDER BY follower.username
+        """,
+        username=username,
+    )
+    return list(records)
+
+
 def create_post(client: Neo4jClient, username: str, content: str) -> Dict:
     """Create a new post for a user."""
     result = client.execute_write(
@@ -198,6 +213,28 @@ def find_user_for_login(client: Neo4jClient, identifier: str) -> Optional[Dict]:
     )
     if not records:
         return None
+    return records[0]["user"]
+
+
+def get_user_profile(client: Neo4jClient, username: str) -> Dict:
+    """Fetch a user's profile."""
+    records = list(
+        client.execute_read(
+            """
+            MATCH (u:User {username: $username})
+            RETURN u {
+                .username,
+                .name,
+                .email,
+                .bio,
+                .created_at
+            } AS user
+            """,
+            username=username,
+        )
+    )
+    if not records:
+        raise ValueError("Usuário não encontrado.")
     return records[0]["user"]
 
 
@@ -447,3 +484,36 @@ def _ensure_unique_identity(
         )
         if records:
             raise ValueError("Já existe um usuário com este email.")
+
+
+def list_user_posts(client: Neo4jClient, username: str) -> List[Dict]:
+    """Return all posts for a given user."""
+    records = client.execute_read(
+        """
+        MATCH (:User {username: $username})-[:PUBLISHED]->(post:Post)
+        RETURN post {
+            .id,
+            .content,
+            .created_at
+        } AS post
+        ORDER BY post.created_at DESC
+        """,
+        username=username,
+    )
+    return [record["post"] for record in records]
+
+
+def update_user_bio(client: Neo4jClient, username: str, bio: str) -> Dict:
+    """Update the bio field for the given user."""
+    result = client.execute_write(
+        """
+        MATCH (u:User {username: $username})
+        SET u.bio = $bio
+        RETURN u { .* } AS user
+        """,
+        username=username,
+        bio=bio,
+    )
+    if not result["records"]:
+        raise ValueError("Usuário não encontrado para atualizar bio.")
+    return result["records"][0]["user"]

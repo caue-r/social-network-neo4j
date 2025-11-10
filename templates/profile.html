@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block content %}
+  <style>
+    .profile-summary {
+      display: grid;
+      gap: 0.75rem;
+      padding: 1rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #f9fafb;
+    }
+    .profile-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.95rem;
+      color: #4b5563;
+    }
+    .profile-columns {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+    .list-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 1rem;
+      background: #fff;
+      max-height: 360px;
+      overflow-y: auto;
+    }
+    .list-card h3 {
+      margin-top: 0;
+    }
+    .list-card ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.6rem;
+    }
+    .list-card li {
+      border-bottom: 1px solid #f3f4f6;
+      padding-bottom: 0.4rem;
+    }
+    .list-card li:last-child {
+      border-bottom: none;
+    }
+    .posts-grid {
+      display: grid;
+      gap: 1rem;
+    }
+  </style>
+
+  <section>
+    <h2>Meu perfil</h2>
+    <div class="profile-summary">
+      <div>
+        <strong>{{ profile_user.name or "Nome não informado" }}</strong>
+        <p>@{{ profile_user.username }}</p>
+      </div>
+      <div class="profile-meta">
+        <span>Email: {{ profile_user.email or "não informado" }}</span>
+        <span>Conta criada em: {{ profile_user.created_at or "sem data" }}</span>
+      </div>
+      <form method="post" action="{{ url_for('update_bio') }}">
+        <label for="profile-bio">Bio</label>
+        <textarea id="profile-bio" name="bio" rows="4" placeholder="Conte um pouco sobre você">{{ profile_user.bio or "" }}</textarea>
+        <button type="submit">Salvar bio</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="profile-columns">
+    <div class="list-card">
+      <h3>Quem você segue ({{ following|length }})</h3>
+      {% if following %}
+        <ul>
+          {% for user in following %}
+            <li>
+              <strong>@{{ user.username }}</strong><br>
+              <span>{{ user.name or "Sem nome" }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-feed">Você ainda não segue ninguém.</p>
+      {% endif %}
+    </div>
+    <div class="list-card">
+      <h3>Quem segue você ({{ followers|length }})</h3>
+      {% if followers %}
+        <ul>
+          {% for user in followers %}
+            <li>
+              <strong>@{{ user.username }}</strong><br>
+              <span>{{ user.name or "Sem nome" }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-feed">Nenhum seguidor até o momento.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section>
+    <h2>Meus posts ({{ posts|length }})</h2>
+    {% if posts %}
+      <div class="posts-grid">
+        {% for post in posts %}
+          <article class="feed-card">
+            <p>{{ post.content }}</p>
+            <small>{{ post.created_at }}</small>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-feed">Você ainda não publicou nada.</div>
+    {% endif %}
+  </section>
+{% endblock %}
