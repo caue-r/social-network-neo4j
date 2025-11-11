@@ -2,13 +2,15 @@
 <html lang="pt-br">
   <head>
     <meta charset="utf-8">
-    <title>Rede Social Neo4j</title>
+    <title>ConectaGraph</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   </head>
   <body>
     <header>
-      <h1>Rede Social Neo4j</h1>
+      <a class="site-title" href="{{ url_for('index') }}">
+        ConectaGraph
+      </a>
       <div class="header-actions">
         {% set header_user = session.get("auth_user") %}
         {% if header_user %}
