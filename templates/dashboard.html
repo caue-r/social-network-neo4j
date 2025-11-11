@@ -55,20 +55,20 @@
     <section class="post-box">
       <form method="post" action="{{ url_for('create_post') }}">
         <label class="sr-only" for="post-content">Escrever post</label>
-        <textarea id="post-content" name="content" rows="3" placeholder="Escreva algo..." required></textarea>
+        <textarea id="post-content" name="content" rows="4" placeholder="O que está acontecendo?" required></textarea>
         <div class="post-actions">
-          <button type="submit">Postar</button>
+          <button type="submit">📝 Publicar</button>
         </div>
       </form>
     </section>
 
     <section class="feed-section">
       <div class="feed-heading">
-        <h2>Feed</h2>
+        <h2>📰 Feed</h2>
         <form method="post" action="{{ url_for('fetch_feed') }}" class="feed-filter">
           <label class="sr-only" for="feed-limit">Quantidade</label>
           <input id="feed-limit" type="number" min="1" max="100" name="limit" value="{{ feed_limit or 25 }}">
-          <button type="submit" class="secondary-button">Atualizar</button>
+          <button type="submit" class="secondary-button">🔄 Atualizar</button>
         </form>
       </div>
       {% if feed is not none %}
