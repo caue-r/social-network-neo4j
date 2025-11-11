@@ -7,6 +7,14 @@ Uma aplicação de exemplo que demonstra como combinar **Neo4j** com **Python** 
 
 > ⚠️ Este repositório é voltado para fins didáticos. Não utilize as credenciais presentes em exemplos em ambientes públicos.
 
+## Funcionalidades principais
+
+- Cadastro e autenticação web com Flask, incluindo busca de usuários, follow/unfollow, criação de posts e feed com controle de limite.
+- Tela de perfil com edição de bio, listagem de seguidores/seguidos e histórico completo de posts.
+- Painel administrativo protegido por senha (`/admin`) para criar, atualizar, redefinir senha e excluir usuários.
+- CLI (`main.py`) que expõe os comandos essenciais para automatizações e integrações.
+- Camada de serviço compartilhada (`social_network/service.py`) que centraliza as regras de negócio e consultas Cypher utilizadas por todas as interfaces.
+
 ## Estrutura do projeto
 
 ```
@@ -36,9 +44,12 @@ NEO4J_USERNAME=<usuario>
 NEO4J_PASSWORD=<senha>
 NEO4J_DATABASE=neo4j            # opcional: nome do banco (use quando não for o default)
 FLASK_SECRET_KEY=troque-esta-chave
+ADMIN_USERNAME=admin            # opcional: usuário do painel /admin (default: admin)
+ADMIN_PASSWORD=troque-esta-senha # opcional: senha do painel /admin (default: admin)
 ```
 
 > O módulo `python-dotenv` é carregado automaticamente tanto pelo CLI quanto pela aplicação Flask, facilitando o desenvolvimento local.
+> Para evitar uso dos valores padrão em ambientes acessíveis, ajuste `ADMIN_USERNAME` e `ADMIN_PASSWORD`.
 
 ### Instalação
 
@@ -79,13 +90,21 @@ python main.py feed alice --limit 5
    flask --app app run --debug
    ```
 
-3. Acesse `http://127.0.0.1:5000/` e utilize as telas para registrar-se, fazer login e interagir com a rede.
+3. Acesse `http://127.0.0.1:5000/`, cadastre-se em `/register`, faça login em `/login` e utilize o dashboard autenticado.
 
-O painel autenticado permite:
+### Painel autenticado
 
-* Seguir outros usuários
-* Criar novos posts
-* Atualizar o feed com um limite configurável de posts recentes
+- Buscar usuários por nome/username e seguir ou deixar de seguir perfis diretamente da lista de resultados.
+- Publicar posts e atualizar o feed informando o limite desejado de itens.
+- Abrir `/profile` para editar a bio, revisar seguidores/seguidos e listar todos os posts do usuário autenticado.
+- Efetuar logout com segurança (encerra também o modo administrador ativo).
+
+### Painel do administrador
+
+- Acesse `http://127.0.0.1:5000/admin` e informe `ADMIN_USERNAME`/`ADMIN_PASSWORD` configurados no `.env` (os valores padrão `admin`/`admin` servem apenas para desenvolvimento local).
+- Busque usuários por nome, email ou username, altere campos (incluindo redefinição de senha) e salve as mudanças.
+- Cadastre perfis completos, inclusive bio e email, a partir do formulário dedicado.
+- Exclua usuários e posts associados quando precisar limpar o ambiente de testes (a operação é destrutiva).
 
 ## Camada de serviço e modelo de dados
 
