@@ -1,11 +1,47 @@
 # Demo de Rede Social com Neo4j
 
-Uma aplicação de exemplo que demonstra como combinar **Neo4j** com **Python** para construir funcionalidades típicas de uma rede social. O projeto oferece duas experiências:
-
-* Uma interface de linha de comando para criar usuários, seguir perfis, publicar posts e consultar o feed.
-* Uma interface web simples (Flask) para executar as mesmas ações a partir do navegador.
+Uma aplicação de exemplo que demonstra como combinar **Neo4j** com **Python** para construir funcionalidades típicas de uma rede social. O projeto oferece duas experiências: uma interface web em Flask e uma CLI para automações.
 
 > ⚠️ Este repositório é voltado para fins didáticos. Não utilize as credenciais presentes em exemplos em ambientes públicos.
+
+## Guia de arquivos do projeto
+
+A tabela a seguir explica, arquivo a arquivo, a função de cada parte do repositório.
+
+### Raiz do repositório
+
+| Caminho | Função |
+| --- | --- |
+| `LICENSE` | Texto da licença MIT que rege o uso do código-fonte. |
+| `README.md` | Documento que apresenta o projeto, instruções de execução e o mapa de arquivos (este arquivo). |
+| `requirements.txt` | Lista as dependências Python necessárias para rodar a aplicação e a CLI. |
+| `app.py` | Implementa a aplicação **Flask**, incluindo rotas web públicas, autenticadas e administrativas, além dos filtros de template usados nas páginas. |
+| `main.py` | Expõe a interface de linha de comando com comandos para criar usuários, seguir perfis, publicar posts e consultar o feed. |
+
+### Módulo `social_network/`
+
+| Caminho | Função |
+| --- | --- |
+| `social_network/neo4j_client.py` | Abstrai a criação do driver oficial do Neo4j, centraliza a leitura das variáveis de ambiente e oferece métodos utilitários para executar queries Cypher com segurança. |
+| `social_network/service.py` | Camada de regras de negócio: operações de cadastro de usuários, relacionamentos de follow/unfollow, publicação de posts, buscas, feed e autenticação. Compartilhada tanto pela web quanto pela CLI. |
+
+### Diretório `templates/`
+
+| Caminho | Função |
+| --- | --- |
+| `templates/base.html` | Layout base utilizado por todas as páginas. Define cabeçalho, área de mensagens flash e inclui o CSS principal. |
+| `templates/index.html` | Página inicial pública com formulários de registro e login rápidos. |
+| `templates/login.html` | Página dedicada de login com formulário simples de autenticação. |
+| `templates/register.html` | Página dedicada de registro com campos de nome, email, usuário e senha. |
+| `templates/dashboard.html` | Dashboard autenticado: busca de usuários, sugestões para seguir, feed de posts, formulário de publicação e controles de follow/unfollow. |
+| `templates/profile.html` | Exibe e permite editar dados do perfil autenticado (bio, seguidores, seguindo e posts próprios). |
+| `templates/admin.html` | Painel administrativo protegido: autenticação de administrador, busca e edição de usuários, redefinição de senha e exclusão de contas. |
+
+### Diretório `static/`
+
+| Caminho | Função |
+| --- | --- |
+| `static/styles.css` | Folha de estilo global responsável pelo visual das páginas (layout responsivo, cartões, formulários e feedback visual). |
 
 ## Funcionalidades principais
 
@@ -14,19 +50,6 @@ Uma aplicação de exemplo que demonstra como combinar **Neo4j** com **Python** 
 - Painel administrativo protegido por senha (`/admin`) para criar, atualizar, redefinir senha e excluir usuários.
 - CLI (`main.py`) que expõe os comandos essenciais para automatizações e integrações.
 - Camada de serviço compartilhada (`social_network/service.py`) que centraliza as regras de negócio e consultas Cypher utilizadas por todas as interfaces.
-
-## Estrutura do projeto
-
-```
-.
-├── app.py                    # Aplicação Flask com telas de cadastro, login e painel autenticado
-├── main.py                   # CLI orientada a comandos para operar a rede social
-├── requirements.txt          # Dependências Python
-├── social_network/
-│   ├── neo4j_client.py       # Wrapper para conectar e executar queries no Neo4j
-│   └── service.py            # Regras de negócio e consultas Cypher
-└── templates/                # Layout base e páginas HTML utilizadas pelo Flask
-```
 
 ## Pré-requisitos
 
@@ -131,4 +154,4 @@ As funções de serviço encapsulam padrões comuns:
 
 ## Licença
 
-Distribuído sob a licença MIT. Consulte o arquivo `LICENSE` se/quando disponível.
+Distribuído sob a licença MIT. Consulte o arquivo `LICENSE` para mais detalhes.
