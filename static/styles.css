@@ -488,6 +488,18 @@ button:hover {
   font-size: 0.95rem;
 }
 
+.follow-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.follow-item form {
+  margin: 0;
+}
+
 .sketch-top-row {
   display: flex;
   gap: 1.25rem;
