@@ -1,95 +1,127 @@
 {% extends "base.html" %}
 {% block content %}
-  <div class="sketch-dashboard">
-    <div class="sketch-top-row">
-      <form method="get" action="{{ url_for('dashboard') }}" class="sketch-search">
-        <label class="sr-only" for="search-user">Buscar usuário</label>
-        <input id="search-user" name="search" placeholder="Buscar user" value="{{ search_query }}">
-        <button type="submit" class="icon-button" aria-label="Buscar usuário">🔍</button>
-      </form>
-      <a class="profile-circle" href="{{ url_for('profile') }}" title="Meu perfil">👤</a>
-    </div>
+  <div class="dashboard-stage">
+    <div class="sketch-dashboard main-dashboard-card">
+      <div class="sketch-top-row">
+        <form method="get" action="{{ url_for('dashboard') }}" class="sketch-search">
+          <label class="sr-only" for="search-user">Buscar usuário</label>
+          <input id="search-user" name="search" placeholder="Buscar user" value="{{ search_query }}">
+          <button type="submit" class="icon-button" aria-label="Buscar usuário">🔍</button>
+        </form>
+        <a class="profile-circle" href="{{ url_for('profile') }}" title="Meu perfil">👤</a>
+      </div>
 
-    {% if search_query %}
-      <section class="panel-card search-results-card">
-        <div class="panel-title">
-          <h3>Buscar: "{{ search_query }}"</h3>
-          <span class="text-muted">{{ search_results|length }} resultado(s)</span>
-        </div>
-        <div class="user-search-results">
-          {% if search_results %}
-            {% for user in search_results %}
-              <div class="user-card">
-                <div>
-                  <strong>@{{ user.username }}</strong>
-                  <span>{{ user.name or "Sem nome" }}</span>
-                  {% if user.bio %}
-                    <p>{{ user.bio }}</p>
+      {% if search_query %}
+        <section class="panel-card search-results-card">
+          <div class="panel-title">
+            <h3>Buscar: "{{ search_query }}"</h3>
+            <span class="text-muted">{{ search_results|length }} resultado(s)</span>
+          </div>
+          <div class="user-search-results">
+            {% if search_results %}
+              {% for user in search_results %}
+                <div class="user-card">
+                  <div>
+                    <strong>@{{ user.username }}</strong>
+                    <span>{{ user.name or "Sem nome" }}</span>
+                    {% if user.bio %}
+                      <p>{{ user.bio }}</p>
+                    {% endif %}
+                  </div>
+                  {% set is_following = user.username in following_usernames %}
+                  {% if user.username == auth_user.username %}
+                    <span class="self-pill">Você</span>
+                  {% elif is_following %}
+                    <form method="post" action="{{ url_for('unfollow') }}">
+                      <input type="hidden" name="follows" value="{{ user.username }}">
+                      <input type="hidden" name="redirect_search" value="{{ search_query }}">
+                      <button type="submit" class="unfollow-button">Deixar de seguir</button>
+                    </form>
+                  {% else %}
+                    <form method="post" action="{{ url_for('follow') }}">
+                      <input type="hidden" name="follows" value="{{ user.username }}">
+                      <input type="hidden" name="redirect_search" value="{{ search_query }}">
+                      <button type="submit">Seguir</button>
+                    </form>
                   {% endif %}
                 </div>
-                {% set is_following = user.username in following_usernames %}
-                {% if user.username == auth_user.username %}
-                  <span class="self-pill">Você</span>
-                {% elif is_following %}
-                  <form method="post" action="{{ url_for('unfollow') }}">
-                    <input type="hidden" name="follows" value="{{ user.username }}">
-                    <input type="hidden" name="redirect_search" value="{{ search_query }}">
-                    <button type="submit" class="unfollow-button">Deixar de seguir</button>
-                  </form>
-                {% else %}
-                  <form method="post" action="{{ url_for('follow') }}">
-                    <input type="hidden" name="follows" value="{{ user.username }}">
-                    <input type="hidden" name="redirect_search" value="{{ search_query }}">
-                    <button type="submit">Seguir</button>
-                  </form>
+              {% endfor %}
+            {% else %}
+              <div class="empty-feed">Nenhum usuário encontrado.</div>
+            {% endif %}
+          </div>
+        </section>
+      {% endif %}
+
+      <section class="post-box">
+        <form method="post" action="{{ url_for('create_post') }}">
+          <label class="sr-only" for="post-content">Escrever post</label>
+          <textarea id="post-content" name="content" rows="4" placeholder="O que está acontecendo?" required></textarea>
+          <div class="post-actions">
+            <button type="submit">📝 Publicar</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="feed-section">
+        <div class="feed-heading">
+          <h2>📰 Feed</h2>
+          <form method="post" action="{{ url_for('fetch_feed') }}" class="feed-filter">
+            <label class="sr-only" for="feed-limit">Quantidade</label>
+            <input id="feed-limit" type="number" min="1" max="100" name="limit" value="{{ feed_limit or 25 }}">
+            <button type="submit" class="secondary-button">🔄 Atualizar</button>
+          </form>
+        </div>
+        {% if feed is not none %}
+          <div class="feed-list">
+            {% if feed %}
+              {% for post in feed %}
+                <article class="feed-card">
+                  <h4>@{{ post.username }} &middot; {{ post.name or "Sem nome" }}</h4>
+                  <p>{{ post.content }}</p>
+                  <small>{{ post.created_at | short_datetime }}</small>
+                </article>
+              {% endfor %}
+            {% else %}
+              <div class="empty-feed">
+                Nenhum post encontrado.
+              </div>
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="empty-feed">Atualize o feed para ver conteúdos.</div>
+        {% endif %}
+      </section>
+    </div>
+
+    <aside class="panel-card suggestions-card suggestions-floating">
+      <div class="panel-title">
+        <h3>Quem seguir</h3>
+        <span class="text-muted">Perfis sugeridos</span>
+      </div>
+      {% if suggested_users %}
+        <ul class="suggestions-list">
+          {% for user in suggested_users %}
+            <li class="suggestion-item">
+              <div class="suggestion-info">
+                <strong title="@{{ user.username }}">@{{ user.username }}</strong>
+                <span title="{{ user.name or 'Sem nome' }}">{{ user.name or "Sem nome" }}</span>
+                {% if user.bio %}
+                  <p title="{{ user.bio }}">{{ user.bio }}</p>
                 {% endif %}
               </div>
-            {% endfor %}
-          {% else %}
-            <div class="empty-feed">Nenhum usuário encontrado.</div>
-          {% endif %}
-        </div>
-      </section>
-    {% endif %}
-
-    <section class="post-box">
-      <form method="post" action="{{ url_for('create_post') }}">
-        <label class="sr-only" for="post-content">Escrever post</label>
-        <textarea id="post-content" name="content" rows="4" placeholder="O que está acontecendo?" required></textarea>
-        <div class="post-actions">
-          <button type="submit">📝 Publicar</button>
-        </div>
-      </form>
-    </section>
-
-    <section class="feed-section">
-      <div class="feed-heading">
-        <h2>📰 Feed</h2>
-        <form method="post" action="{{ url_for('fetch_feed') }}" class="feed-filter">
-          <label class="sr-only" for="feed-limit">Quantidade</label>
-          <input id="feed-limit" type="number" min="1" max="100" name="limit" value="{{ feed_limit or 25 }}">
-          <button type="submit" class="secondary-button">🔄 Atualizar</button>
-        </form>
-      </div>
-      {% if feed is not none %}
-        <div class="feed-list">
-          {% if feed %}
-            {% for post in feed %}
-              <article class="feed-card">
-                <h4>@{{ post.username }} &middot; {{ post.name or "Sem nome" }}</h4>
-                <p>{{ post.content }}</p>
-                <small>{{ post.created_at | short_datetime }}</small>
-              </article>
-            {% endfor %}
-          {% else %}
-            <div class="empty-feed">
-              Nenhum post encontrado.
-            </div>
-          {% endif %}
-        </div>
+              <form method="post" action="{{ url_for('follow') }}">
+                <input type="hidden" name="follows" value="{{ user.username }}">
+                <button type="submit" class="secondary-button small-button">Seguir</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
       {% else %}
-        <div class="empty-feed">Atualize o feed para ver conteúdos.</div>
+        <div class="empty-feed compact">
+          Você já segue todo mundo por aqui.
+        </div>
       {% endif %}
-    </section>
+    </aside>
   </div>
 {% endblock %}

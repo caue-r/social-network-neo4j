@@ -518,6 +518,29 @@ def delete_post(client: Neo4jClient, username: str, post_id: str) -> None:
         raise ValueError("Post não encontrado ou você não tem permissão para apagá-lo.")
 
 
+def suggest_users_to_follow(client: Neo4jClient, username: str, *, limit: int = 3) -> List[Dict]:
+    """Return random profiles the user does not follow yet."""
+    records = client.execute_read(
+        """
+        MATCH (viewer:User {username: $username})
+        MATCH (candidate:User)
+        WHERE candidate.username <> viewer.username
+          AND NOT (viewer)-[:FOLLOWS]->(candidate)
+        WITH candidate, rand() AS random
+        ORDER BY random
+        RETURN candidate {
+            .username,
+            .name,
+            .bio
+        } AS user
+        LIMIT $limit
+        """,
+        username=username,
+        limit=limit,
+    )
+    return [record["user"] for record in records]
+
+
 def update_user_bio(client: Neo4jClient, username: str, bio: str) -> Dict:
     """Update the bio field for the given user."""
     result = client.execute_write(
