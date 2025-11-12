@@ -295,6 +295,28 @@ def create_post():
     return redirect(url_for("dashboard"))
 
 
+@app.post("/delete-post")
+@login_required
+def delete_post():
+    post_id = request.form.get("post_id", "").strip()
+    auth_user = session["auth_user"]
+
+    if not post_id:
+        flash("Post inválido para exclusão.", "error")
+        return redirect(url_for("profile"))
+
+    try:
+        with get_client() as client:
+            service.delete_post(client, auth_user["username"], post_id)
+    except ValueError as exc:
+        flash(str(exc), "error")
+    except Exception as exc:  # pragma: no cover - feedback ao usuário
+        flash(f"Erro ao remover post: {exc}", "error")
+    else:
+        flash("Post removido com sucesso.", "success")
+    return redirect(url_for("profile"))
+
+
 @app.post("/feed")
 @login_required
 def fetch_feed():

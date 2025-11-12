@@ -347,6 +347,23 @@ button:hover {
   opacity: 1;
 }
 
+.post-meta {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.post-meta form {
+  margin: 0;
+}
+
+.post-meta button {
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+}
+
 .panel-card {
   background: var(--panel-muted);
   border: 1px solid var(--border);

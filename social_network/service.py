@@ -503,6 +503,21 @@ def list_user_posts(client: Neo4jClient, username: str) -> List[Dict]:
     return [record["post"] for record in records]
 
 
+def delete_post(client: Neo4jClient, username: str, post_id: str) -> None:
+    """Delete a post that belongs to the provided user."""
+    result = client.execute_write(
+        """
+        MATCH (:User {username: $username})-[:PUBLISHED]->(post:Post {id: $post_id})
+        DETACH DELETE post
+        RETURN 1 AS deleted
+        """,
+        username=username,
+        post_id=post_id,
+    )
+    if not result["records"]:
+        raise ValueError("Post não encontrado ou você não tem permissão para apagá-lo.")
+
+
 def update_user_bio(client: Neo4jClient, username: str, bio: str) -> Dict:
     """Update the bio field for the given user."""
     result = client.execute_write(
