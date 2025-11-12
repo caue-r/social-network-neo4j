@@ -64,6 +64,7 @@ def render_dashboard(**context):
         "search_results": [],
         "search_query": "",
         "following_usernames": set(),
+        "suggested_users": [],
     }
     default_context.update(context)
     return render_template("dashboard.html", **default_context)
@@ -140,6 +141,7 @@ def dashboard():
     search_query = request.args.get("search", "").strip()
     search_results: List[dict] = []
     following_usernames = set()
+    suggested_users: List[dict] = []
     auth_user = session.get("auth_user")
     try:
         with get_client() as client:
@@ -147,12 +149,14 @@ def dashboard():
             following_usernames = {user["username"] for user in following}
             if search_query:
                 search_results = service.search_users(client, search_query)
+            suggested_users = service.suggest_users_to_follow(client, auth_user["username"])
     except Exception as exc:  # pragma: no cover - feedback ao usuário
         flash(f"Erro ao buscar usuários: {exc}", "error")
     return render_dashboard(
         search_results=search_results,
         search_query=search_query,
         following_usernames=following_usernames,
+        suggested_users=suggested_users,
     )
 
 
