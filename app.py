@@ -337,14 +337,21 @@ def fetch_feed():
         limit = 25
 
     feed: Optional[List[dict]] = None
+    suggested_users: List[dict] = []
     try:
         with get_client() as client:
             feed = service.fetch_feed(client, auth_user["username"], limit=limit)
+            suggested_users = service.suggest_users_to_follow(client, auth_user["username"])
     except Exception as exc:  # pragma: no cover - feedback ao usuário
         flash(f"Erro ao buscar feed: {exc}", "error")
         return redirect(url_for("dashboard"))
 
-    return render_dashboard(feed=feed, feed_username=auth_user["username"], feed_limit=limit)
+    return render_dashboard(
+        feed=feed,
+        feed_username=auth_user["username"],
+        feed_limit=limit,
+        suggested_users=suggested_users,
+    )
 
 
 @app.post("/register")
