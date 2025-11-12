@@ -25,9 +25,16 @@
       {% if following %}
         <ul>
           {% for user in following %}
-            <li>
-              <strong>@{{ user.username }}</strong><br>
-              <span>{{ user.name or "Sem nome" }}</span>
+            <li class="follow-item">
+              <div>
+                <strong>@{{ user.username }}</strong><br>
+                <span>{{ user.name or "Sem nome" }}</span>
+              </div>
+              <form method="post" action="{{ url_for('unfollow') }}">
+                <input type="hidden" name="follows" value="{{ user.username }}">
+                <input type="hidden" name="redirect_profile" value="1">
+                <button type="submit" class="unfollow-button small-button">Deixar de seguir</button>
+              </form>
             </li>
           {% endfor %}
         </ul>

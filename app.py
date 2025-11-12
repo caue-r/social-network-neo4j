@@ -247,8 +247,12 @@ def follow():
 def unfollow():
     unfollow_username = request.form.get("follows", "").strip()
     redirect_search = request.form.get("redirect_search", "").strip()
+    redirect_profile = request.form.get("redirect_profile")
     auth_user = session["auth_user"]
-    target_url = url_for("dashboard", search=redirect_search) if redirect_search else url_for("dashboard")
+    if redirect_profile:
+        target_url = url_for("profile")
+    else:
+        target_url = url_for("dashboard", search=redirect_search) if redirect_search else url_for("dashboard")
 
     if not unfollow_username:
         flash("Informe quem será deixado de seguir.", "error")
