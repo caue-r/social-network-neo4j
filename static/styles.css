@@ -6,8 +6,8 @@
   --border: #273340;
   --text: #f7f9f9;
   --text-muted: #8b98a5;
-  --accent: #1d9bf0;
-  --accent-dark: #1a8cd8;
+  --accent: #22c55e;
+  --accent-dark: #16a34a;
   --danger: #f4212e;
   --danger-dark: #c2121d;
 }
@@ -139,14 +139,14 @@ header {
   color: var(--text);
   background: var(--panel-muted);
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(29, 155, 240, 0.2);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
 }
 
 .profile-circle:hover {
   transform: scale(1.1);
   border-color: var(--accent);
-  box-shadow: 0 6px 20px rgba(29, 155, 240, 0.4);
-  background: rgba(29, 155, 240, 0.1);
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+  background: rgba(34, 197, 94, 0.1);
 }
 
 main {
@@ -214,7 +214,7 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(29, 155, 240, 0.1);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
   background: rgba(255, 255, 255, 0.03);
 }
 
@@ -258,7 +258,7 @@ button:hover::before {
 button {
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
   color: #ffffff;
-  box-shadow: 0 4px 15px rgba(29, 155, 240, 0.4);
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
 }
 
 button:hover,
@@ -267,7 +267,7 @@ button:hover,
 }
 
 button:hover {
-  box-shadow: 0 8px 25px rgba(29, 155, 240, 0.5);
+  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.5);
 }
 
 .secondary-button {
@@ -277,9 +277,9 @@ button:hover {
 }
 
 .secondary-button:hover {
-  background: rgba(29, 155, 240, 0.15);
+  background: rgba(34, 197, 94, 0.15);
   border-color: var(--accent);
-  box-shadow: 0 4px 15px rgba(29, 155, 240, 0.3);
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
 }
 
 .danger-button,
@@ -302,8 +302,8 @@ button:hover {
 }
 
 .flash-success {
-  background: rgba(29, 155, 240, 0.18);
-  border: 1px solid rgba(29, 155, 240, 0.4);
+  background: rgba(34, 197, 94, 0.18);
+  border: 1px solid rgba(34, 197, 94, 0.4);
 }
 
 .flash-error {
@@ -524,7 +524,7 @@ button:hover {
 
 .sketch-search:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(29, 155, 240, 0.1);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
 }
 
 .sketch-search input {
@@ -575,7 +575,7 @@ button:hover {
 
 .post-box:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(29, 155, 240, 0.1), 0 8px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1), 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .post-box textarea {
@@ -792,7 +792,7 @@ button:hover {
   font-size: 2rem;
   background: var(--accent);
   color: #fff;
-  box-shadow: 0 25px 45px rgba(29, 155, 240, 0.45);
+  box-shadow: 0 25px 45px rgba(34, 197, 94, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
